@@ -1,0 +1,9 @@
+language = "en"
+words = [
+    "clippy",
+    "dbus",
+    "msvc",
+    "rustc",
+    "wslawake",
+    "zbus",
+]
