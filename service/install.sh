@@ -7,9 +7,6 @@ set -u
 _service_path="/etc/systemd/system/wslawake.service"
 _linux_bin_path="/usr/local/bin/wslawake"
 _windows_bin_path="/usr/local/bin/wslawake.exe"
-_repo="$(dirname $(dirname $0))"
-
-_verbose=false
 
 usage() {
     cat <<EOF
@@ -24,6 +21,8 @@ Usage: install.sh [OPTIONS]
         Enable verbose logging
 EOF
 }
+
+_verbose=false
 
 main() {
     need_cmd chmod
@@ -52,17 +51,18 @@ main() {
     done
 
     if has_service wslawake.service; then
-        log "Stopping \"wslawake.service\""
-        systemctl disable --now wslawake.service
+        echo 'Stopping "wslawake.service"'
+        systemctl disable --now wslawake.service || exit 1
     fi
 
-    copy service/wslawake.service "$_service_path" || exit 1
-    copy target/release/wslawake "$_linux_bin_path" || exit 1
+    echo 'Copying files'
+    copy wslawake.service "$_service_path" || exit 1
+    copy wslawake "$_linux_bin_path" || exit 1
     chmod +x "$_linux_bin_path" || exit 1
-    copy target/x86_64-pc-windows-msvc/release/wslawake.exe "$_windows_bin_path" || exit 1
+    copy wslawake.exe "$_windows_bin_path" || exit 1
     chmod +x "$_windows_bin_path" || exit 1
 
-    log "Starting \"wslawake.service\""
+    echo 'Starting "wslawake.service"'
     systemctl enable --now wslawake.service
 }
 
@@ -95,7 +95,8 @@ need_cmd() {
 }
 
 need_file() {
-    if [ ! -f "$_repo/$1" ]; then
+    local _script_dir="$(dirname $0)"
+    if [ ! -f "$_script_dir/$1" ]; then
         err "missing \"$1\"; see README.md for instructions"
         exit 1
     fi
@@ -111,4 +112,4 @@ check_cmd() {
     command -v "$1" > /dev/null 2>&1
 }
 
-main "$@" || exit 1
+main "$@"

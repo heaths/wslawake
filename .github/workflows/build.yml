@@ -1,9 +1,9 @@
 # Copyright 2026 Heath Stewart.
 # Licensed under the MIT License. See LICENSE.txt in the project root for license information.
 #
-# cspell:ignore RUSTFLAGS Dwarnings
+# cspell:ignore cvzf RUSTFLAGS Dwarnings
 
-name: ci
+name: build
 
 on:
   pull_request:
@@ -12,8 +12,13 @@ on:
   push:
     branches:
       - main
-  # TODO: Remove before merging to main.
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      release:
+        description: Whether this is running as part of a release workflow
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -47,7 +52,7 @@ jobs:
             ext: '.exe'
             target: x86_64-pc-windows-msvc
     steps:
-      - name: Check
+      - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -70,7 +75,7 @@ jobs:
           echo 'dir=target/${{ matrix.target }}/release' | tee -a "$GITHUB_OUTPUT"
           echo 'target=target/${{ matrix.target }}/release/wslawake${{ matrix.ext }}' | tee -a "$GITHUB_OUTPUT"
       - name: Attest
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ inputs.release }}
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: ${{ steps.build.outputs.target }}
@@ -82,3 +87,40 @@ jobs:
         with:
           name: ${{ steps.prepare-upload.outputs.package }}
           path: ${{ steps.build.outputs.target }}
+
+  pack:
+    needs: build
+    runs-on: ubuntu-slim
+    strategy:
+      matrix:
+        arch:
+          - arm64
+          - x64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            service
+      - name: Download
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: '*-${{ matrix.arch }}'
+          path: service
+          merge-multiple: true
+      - name: Package
+        id: package
+        run: |
+          name='linux-${{ matrix.arch }}.tar.gz'
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          tar -C service -cvzf "$name" .
+      - name: Attest package
+        if: ${{ inputs.release }}
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ${{ steps.package.outputs.name }}
+      - name: Upload package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ steps.package.outputs.name }}
+          path: ${{ steps.package.outputs.name }}
