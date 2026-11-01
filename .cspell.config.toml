@@ -6,6 +6,7 @@ words = [
     "logind",
     "msvc",
     "rustc",
+    "rustup",
     "wslawake",
     "zbus",
 ]
