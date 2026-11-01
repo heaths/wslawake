@@ -10,12 +10,12 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut lines = reader.lines();
 
     while let Some(line) = lines.next_line().await? {
-        if line.is_empty() {
-            unsafe {
+        unsafe {
+            if line.is_empty() {
+                eprintln!("Idling");
                 SetThreadExecutionState(ES_CONTINUOUS);
-            }
-        } else {
-            unsafe {
+            } else {
+                eprintln!("Keeping system awake");
                 SetThreadExecutionState(ES_SYSTEM_REQUIRED | ES_CONTINUOUS);
             }
         }
