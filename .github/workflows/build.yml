@@ -111,6 +111,9 @@ jobs:
       - name: Package
         id: package
         run: |
+          chmod +x service/wslawake
+          chmod +x service/wslawake.exe
+
           name='linux-${{ matrix.arch }}.tar.gz'
           echo "name=$name" >> "$GITHUB_OUTPUT"
           tar -C service -cvzf "$name" .

@@ -10,35 +10,19 @@ In response, a Windows child process will keep the system awake.
 This is intended only for Windows Subsystem for Linux (WSL2) and requires that systemd is enabled.
 These instructions will be simplified in the near future.
 
-1. [Enable](https://learn.microsoft.com/windows/wsl/systemd) support if you haven't already.
-2. [Install Rust](https://rust-lang.org/tools/install) in Windows and your Linux distribution.
-3. Clone this repository in Linux:
+1. Download an appropriate package from the [latest release](https://github.com/heaths/wslawake/releases/latest)
+   or as a pull request artifact for your platform e.g., `linux-x64.tar.gz`.
+
+2. Extract it e.g.:
 
    ```sh
-   git clone https://github.com/heaths/wslawake
+   tar -C wslawake -xvf linux-x64.tar.gz
    ```
 
-4. Build a release executable in Linux:
+3. Run the install script with elevated privileges:
 
    ```sh
-   cargo build --release
-   ```
-
-5. Start a Developer Command shell in Windows.
-   You'll need to have at least [Microsoft Visual Studio](https://visualstudio.microsoft.com/downloads/) Community edition installed with Visual C++.
-
-   Change directories to the WSL directory into which you cloned the repo e.g.:
-
-   ```sh
-   # Replace "Ubuntu" with your distro name.
-   cd \\wsl$\Ubuntu\home\heaths\src\wslawake
-   cargo build --release --target=x86_64-pc-windows-msvc
-   ```
-
-6. Run the install script in Linux with elevated permissions:
-
-   ```sh
-   sudo ./service/install.sh -v
+   sudo wslawake/install.sh
    ```
 
 ### Test the Installation
@@ -62,12 +46,6 @@ To see this in action:
    You'll see `wslawake.exe` requiring the system.
    If you don't, run the `systemd-inhibit` command in Linux again.
    It may have already completed.
-
-To see journal events from `wslawake` or `wslawake.exe` run:
-
-```sh
-journalctl -u wslawake.service
-```
 
 ## License
 

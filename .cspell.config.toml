@@ -7,6 +7,10 @@ words = [
     "msvc",
     "rustc",
     "rustup",
+    "vsconfig",
     "wslawake",
     "zbus",
+]
+ignorePaths = [
+    ".vsconfig",
 ]
