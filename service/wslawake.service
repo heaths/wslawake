@@ -1,0 +1,19 @@
+# Copyright 2026 Heath Stewart.
+# Licensed under the MIT License. See LICENSE.txt in the project root for license information.
+
+[Unit]
+Description=Keep Windows awake from Linux
+Documentation=https://github.com/heaths/wslawake
+After=systemd-logind.service
+Wants=systemd-logind.service
+
+[Service]
+ExecStart=/usr/local/bin/wslawake
+StandardError=journal
+Restart=on-failure
+ProtectSystem=true
+ProtectHome=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

@@ -2,6 +2,8 @@ language = "en"
 words = [
     "clippy",
     "dbus",
+    "journalctl",
+    "logind",
     "msvc",
     "rustc",
     "wslawake",
