@@ -1,0 +1,70 @@
+# Copyright 2026 Heath Stewart.
+# Licensed under the MIT License. See LICENSE.txt in the project root for license information.
+#
+# cspell:ignore cvzf RUSTFLAGS Dwarnings
+
+name: build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  # TODO: Remove after tests.
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  RUSTFLAGS: -Dwarnings
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      release: true
+
+  attest:
+    needs: build
+    runs-on: ubuntu-slim
+    permissions:
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - &download-packages
+        name: Download packages
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: '*.tar.gz'
+          skip-decompress: true
+      - name: Extract files
+        run: |
+          for f in *.tar.gz; do
+            name=$(basename $f .tar.gz)
+            tar -C "artifacts/$name" -xzf $f
+          done
+      - name: Attest files
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: artifacts/**/wslawake*
+      - name: Attest packages
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: '*.tar.gz'
+
+  release:
+    needs: attest
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-slim
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - *download-packages
+      - name: Release
+        run: gh release create '${{ github.ref_name }}' --generate-notes *.tar.gz
