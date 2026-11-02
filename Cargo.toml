@@ -3,6 +3,7 @@ name = "wslawake"
 version = "0.1.0"
 edition = "2024"
 description = "Keep Windows awake from Linux"
+publish = false
 
 [dependencies]
 futures = "0.3.34"
