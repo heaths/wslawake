@@ -1,7 +1,7 @@
 # Copyright 2026 Heath Stewart.
 # Licensed under the MIT License. See LICENSE.txt in the project root for license information.
 #
-# cspell:ignore RUSTFLAGS Dwarnings
+# cspell:ignore RUSTFLAGS Dwarnings shopt
 
 name: release
 
@@ -9,8 +9,6 @@ on:
   push:
     tags:
       - 'v*'
-  # TODO: Remove after tests.
-  workflow_dispatch:
 
 defaults:
   run:
@@ -35,24 +33,27 @@ jobs:
     steps:
       - &download-packages
         name: Download packages
+        id: download
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: '*.tar.gz'
           skip-decompress: true
       - name: Extract files
         run: |
-          for f in *.tar.gz; do
-            name=$(basename $f .tar.gz)
-            tar -C "artifacts/$name" -xzf $f
+          shopt -s globstar
+          for f in **/*.tar.gz; do
+            if [ -f "$f" ]; then
+              name=$(basename "$f" .tar.gz)
+              mkdir -p "artifacts/$name/"
+              tar -C "artifacts/$name/" -xzf "$f"
+            fi
           done
-      - name: Attest files
+      - name: Attest
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
-          subject-path: artifacts/**/wslawake*
-      - name: Attest packages
-        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
-        with:
-          subject-path: '*.tar.gz'
+          subject-path: |
+            **/*.tar.gz
+            artifacts/**/wslawake*
 
   release:
     needs: attest
@@ -64,6 +65,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # Need to clone all history to generate the changelog.
           fetch-depth: 0
       - *download-packages
       - name: Release
