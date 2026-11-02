@@ -116,7 +116,7 @@ jobs:
 
           name='linux-${{ matrix.arch }}.tar.gz'
           echo "name=$name" >> "$GITHUB_OUTPUT"
-          tar -C service -cvzf "$name" .
+          tar -C service/ -cvzf "$name" --exclude-vcs .
       - name: Attest package
         if: ${{ inputs.release }}
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
