@@ -1,0 +1,98 @@
+# Copyright 2026 Heath Stewart.
+# Licensed under the MIT License. See LICENSE.txt in the project root for license information.
+
+name: brew
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: The tag to release e.g., v0.1.0
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The tag to release e.g., v0.1.0
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  BREW_REPOSITORY: heaths/homebrew-tap
+  RELEASE_TAG: ${{ inputs.tag }}
+
+concurrency:
+  group: brew-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  bump-formula:
+    runs-on: ubuntu-latest
+    environment:
+      name: homebrew
+      url: ${{ steps.bump.outputs.pullRequest }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: source
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+      - name: Download release packages
+        run: |
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern linux-arm64.tar.gz --pattern linux-x64.tar.gz --dir packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Checkout tap
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ env.BREW_REPOSITORY }}
+          token: ${{ secrets.HOMEBREW_GITHUB_API_TOKEN }}
+          path: tap
+      - name: Open formula pull request
+        id: bump
+        working-directory: tap
+        run: |
+          branch="wslawake-$RELEASE_TAG"
+          if git ls-remote --exit-code --heads origin "$branch" > /dev/null; then
+            git fetch origin "$branch"
+            git switch --create "$branch" --track "origin/$branch"
+          else
+            git switch --create "$branch"
+          fi
+          python3 ../source/.github/scripts/update-formula.py Formula/wslawake.rb "$RELEASE_TAG" ../packages
+
+          if ! git diff --quiet -- Formula/wslawake.rb; then
+            git config user.name "$GITHUB_ACTOR"
+            git config user.email "$GITHUB_ACTOR_ID+$GITHUB_ACTOR@users.noreply.github.com"
+            git add Formula/wslawake.rb
+            git commit -m "wslawake $RELEASE_TAG"
+            git push --set-upstream origin "$branch"
+          fi
+
+          pullRequest=$(gh pr list --repo "$BREW_REPOSITORY" --head "$branch" --json url --jq '.[0].url // empty')
+          if [ -z "$pullRequest" ] && git log "origin/HEAD..HEAD" --oneline | grep -q .; then
+            pullRequest=$(gh pr create --repo "$BREW_REPOSITORY" --head "$branch" \
+              --title "wslawake $RELEASE_TAG" \
+              --body "Update wslawake to $RELEASE_TAG with SHA-256 hashes of the published ARM64 and x64 packages.")
+          fi
+          echo "pullRequest=$pullRequest" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_GITHUB_API_TOKEN }}
+      - name: Summarize
+        env:
+          PULL_REQUEST: ${{ steps.bump.outputs.pullRequest }}
+        run: |
+          if [ -n "$PULL_REQUEST" ]; then
+            printf '### Review formula update\n\n%s\n' "$PULL_REQUEST" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Formula is already up to date.' >> "$GITHUB_STEP_SUMMARY"
+          fi

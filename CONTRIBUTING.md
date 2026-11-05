@@ -108,6 +108,10 @@ ps -HC wslawake,wslawake.exe
 The `wslawake.service` unit redirects both processes' writes to `stderr` to the journal so you can view them:
 
 ```sh
+# If installed by Homebrew
+journalctl --user -u sh.brew.wslawake.service
+
+# If installed manually
 journalctl -u wslawake.service
 ```
 
