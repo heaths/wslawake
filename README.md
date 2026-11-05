@@ -10,7 +10,7 @@ In response, a Windows child process will keep the system awake.
 This is intended only for Windows Subsystem for Linux (WSL2) and requires that systemd is enabled.
 These instructions will be simplified in the near future.
 
-1. Download an appropriate package from the [latest release](https://github.com/heaths/wslawake/releases/latest)
+1. Download an appropriate tarball from the [latest release](https://github.com/heaths/wslawake/releases/latest)
    or as a pull request artifact for your platform e.g., `linux-x64.tar.gz`.
 
 2. Extract it e.g.:
@@ -46,6 +46,10 @@ To see this in action:
    You'll see `wslawake.exe` requiring the system.
    If you don't, run the `systemd-inhibit` command in Linux again.
    It may have already completed.
+
+### Uninstall
+
+Run the `uninstall.sh` in the tarball to stop the service and remove the service files.
 
 ## License
 
