@@ -72,3 +72,9 @@ jobs:
         run: gh release create '${{ github.ref_name }}' --generate-notes *.tar.gz
         env:
           GH_TOKEN: ${{ github.token }}
+
+  brew:
+    needs: release
+    uses: ./.github/workflows/brew.yml
+    with:
+      tag: ${{ github.ref_name }}

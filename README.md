@@ -8,7 +8,25 @@ In response, a Windows child process will keep the system awake.
 ## Installation
 
 This is intended only for Windows Subsystem for Linux (WSL2) and requires that systemd is enabled.
-These instructions will be simplified in the near future.
+
+### Homebrew
+
+Use [Homebrew](https://brew.sh/) to install the service in Linux distributions.
+You first need to install the tap, but only the first time:
+
+```sh
+brew tap heaths/tap
+```
+
+Once the tap is installed, you can install or update the `wslawake` formula.
+The service is not started automatically up installation and must be started manually.
+
+```sh
+brew install wslawake
+brew services start wslawake
+```
+
+### Manual
 
 1. Download an appropriate tarball from the [latest release](https://github.com/heaths/wslawake/releases/latest)
    or as a pull request artifact for your platform e.g., `linux-x64.tar.gz`.
@@ -24,6 +42,10 @@ These instructions will be simplified in the near future.
    ```sh
    sudo wslawake/install.sh
    ```
+
+#### Uninstall
+
+Run the `uninstall.sh` in the tarball to stop the service and remove the service files.
 
 ### Test the Installation
 
@@ -46,10 +68,6 @@ To see this in action:
    You'll see `wslawake.exe` requiring the system.
    If you don't, run the `systemd-inhibit` command in Linux again.
    It may have already completed.
-
-### Uninstall
-
-Run the `uninstall.sh` in the tarball to stop the service and remove the service files.
 
 ## License
 
