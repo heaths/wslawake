@@ -10,7 +10,7 @@ _windows_bin_path="/usr/local/bin/wslawake.exe"
 
 usage() {
     cat <<EOF
-Keep Windows awake from Linux.
+Install the wslawake service to keep Windows awake from Linux.
 
 Supported only in Windows Subsystem for Linux (WSL).
 
